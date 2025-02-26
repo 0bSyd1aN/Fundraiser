@@ -1,22 +1,20 @@
-// backend/middleware/authMiddleware.js
-
 import jwt from "jsonwebtoken";
-import User from "../models/userModel.js";
+import { JWT_SECRET } from "../config/keys.js";
 
-const authMiddleware = async (req, res, next) => {
-  let token = req.headers.authorization;
+const authMiddleware = (req, res, next) => {
+    const token = req.header("Authorization");
 
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token" });
-  }
+    if (!token) {
+        return res.status(401).json({ message: "Access Denied. No token provided." });
+    }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select("-password");
-    next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
-  }
+    try {
+        const decoded = jwt.verify(token.replace("Bearer ", ""), JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        res.status(401).json({ message: "Invalid token." });
+    }
 };
 
 export default authMiddleware;
